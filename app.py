@@ -123,10 +123,9 @@ with st.form("order"):
 
     sticker("🛵", "The delivery")
     vehicle_type = st.selectbox("Vehicle", list(cats["vehicle_type"]))
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
     distance_km = c1.number_input("Distance (km)", 0.0, 60.0, 4.0, step=0.5)
     prep_minutes = c2.number_input("Prep time (min)", 0.0, 120.0, 15.0, step=1.0)
-    promised_minutes = c3.number_input("Promised time (min)", 5.0, 180.0, 30.0, step=1.0)
 
     submitted = st.form_submit_button("Check this delivery 🛵", type="primary", use_container_width=True)
 
@@ -138,13 +137,17 @@ if submitted:
         "vehicle_type": vehicle_type,
         "items_count": items_count, "order_value_egp": order_value_egp,
         "discount_egp": discount_egp, "distance_km": distance_km,
-        "prep_minutes": prep_minutes, "promised_minutes": promised_minutes,
+        "prep_minutes": prep_minutes,
     }])
-    # Stopgap: the current model was trained WITH payment_method. An unseen value makes its
-    # one-hot columns all zero (handle_unknown="ignore"). Retrain without the column to
-    # remove it for real; this line then does nothing.
-    if "payment_method" in model.feature_names_in_:
-        row["payment_method"] = "none"
+    # Stopgap for columns removed from the form but still expected by the current model:
+    # categorical -> unseen value (all-zero one-hot); numeric -> training mean (scales to 0).
+    # Retrain without these columns to remove them for real; this block then does nothing.
+    scaler = pre.named_transformers_["num"]
+    num_means = dict(zip(scaler.feature_names_in_, scaler.mean_))
+    for col in model.feature_names_in_:
+        if col in row.columns:
+            continue
+        row[col] = num_means[col] if col in num_means else "none"
     row = row[list(model.feature_names_in_)]
 
     pred = int(model.predict(row)[0])
