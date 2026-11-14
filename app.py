@@ -126,6 +126,7 @@ with st.form("order"):
     c1, c2, c3 = st.columns(3)
     distance_km = c1.number_input("Distance (km)", 0.0, 60.0, 4.0, step=0.5)
     prep_minutes = c2.number_input("Prep time (min)", 0.0, 120.0, 15.0, step=1.0)
+    promised_minutes = c3.number_input("Promised time (min)", 5.0, 180.0, 30.0, step=1.0)
 
     submitted = st.form_submit_button("Check this delivery 🛵", type="primary", use_container_width=True)
 
