@@ -74,14 +74,10 @@ if submitted:
         "prep_minutes": prep_minutes, "promised_minutes": promised_minutes,
     }])[list(model.feature_names_in_)]
 
-    prob = float(model.predict_proba(row)[0, 1])
     pred = int(model.predict(row)[0])
 
     st.divider()
-    c1, c2 = st.columns(2)
-    c1.metric("Probability of class 1", f"{prob:.1%}")
-    c2.metric("Prediction", "Class 1 (likely late)" if pred == positive_class else "Class 0 (on time)")
-    st.progress(min(max(prob, 0.0), 1.0))
-
-    with st.expander("Input sent to model"):
-        st.dataframe(row.astype(str).T.rename(columns={0: "value"}))
+    if pred == positive_class:
+        st.error("Prediction: this delivery will likely be late.")
+    else:
+        st.success("Prediction: this delivery will likely be on time.")
