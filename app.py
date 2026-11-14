@@ -122,9 +122,7 @@ with st.form("order"):
     discount_egp = c3.number_input("Discount (EGP)", 0.0, 2000.0, 0.0, step=5.0)
 
     sticker("🛵", "The delivery")
-    c1, c2 = st.columns(2)
-    vehicle_type = c1.selectbox("Vehicle", list(cats["vehicle_type"]))
-    payment_method = c2.selectbox("Payment", list(cats["payment_method"]))
+    vehicle_type = st.selectbox("Vehicle", list(cats["vehicle_type"]))
     c1, c2, c3 = st.columns(3)
     distance_km = c1.number_input("Distance (km)", 0.0, 60.0, 4.0, step=0.5)
     prep_minutes = c2.number_input("Prep time (min)", 0.0, 120.0, 15.0, step=1.0)
@@ -137,11 +135,17 @@ if submitted:
         "hour": hour, "day_name": day_name,
         "is_weekend": int(is_weekend), "is_rush_hour": int(is_rush_hour),
         "city": city, "zone": zone, "restaurant": restaurant, "cuisine": cuisine,
-        "vehicle_type": vehicle_type, "payment_method": payment_method,
+        "vehicle_type": vehicle_type,
         "items_count": items_count, "order_value_egp": order_value_egp,
         "discount_egp": discount_egp, "distance_km": distance_km,
         "prep_minutes": prep_minutes, "promised_minutes": promised_minutes,
-    }])[list(model.feature_names_in_)]
+    }])
+    # Stopgap: the current model was trained WITH payment_method. An unseen value makes its
+    # one-hot columns all zero (handle_unknown="ignore"). Retrain without the column to
+    # remove it for real; this line then does nothing.
+    if "payment_method" in model.feature_names_in_:
+        row["payment_method"] = "none"
+    row = row[list(model.feature_names_in_)]
 
     pred = int(model.predict(row)[0])
 
